@@ -1,0 +1,19 @@
+[Unit]
+Description=Carrier reverse proxy server
+After=network.target auditd.service
+ConditionPathExists=/etc/carrier/forwards.json
+ConditionPathExists=/etc/carrier/certs.json
+
+[Service]
+ExecStart=carrier --certs-json=/etc/carrier/certs.json --forwards-json=/etc/carrier/forwards.json
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartPreventExitStatus=255
+Type=simple
+RuntimeDirectory=carrier
+RuntimeDirectoryMode=0755
+
+[Install]
+WantedBy=multi-user.target
+Alias=carrier.service
