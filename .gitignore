@@ -1,3 +1,4 @@
 *.cer
 *.key
 *.json
+.DS_Store

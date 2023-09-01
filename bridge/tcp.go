@@ -12,67 +12,43 @@ import (
 
 type TCP struct {
 	*types.Forward
-	tcp4Listener net.Listener
-	tcp6Listener net.Listener
+	tcpListener net.Listener
 
 	logger *zap.Logger
 }
 
 func (p *TCP) Close() error {
-	if err := p.tcp4Listener.Close(); err != nil {
+	if err := p.tcpListener.Close(); err != nil {
 		return err
-	}
-	if err := p.tcp6Listener.Close(); err != nil {
-		p.tcp6Listener.Close()
 	}
 	return nil
 }
 
 func (p *TCP) Start() error {
 	p.logger = log.Logger(consts.TCPProxy).With(zap.Int16(consts.ListenPort, int16(p.ListenPort)),
-		zap.Int16(consts.DestPort, int16(p.DestPort)), zap.String(consts.DestUri, p.DestUri()))
+		zap.Int16(consts.DstPort, int16(p.DstPort)), zap.String(consts.DstUri, p.DstUri()))
 
 	if p.Forward == nil {
 		p.logger.Fatal("Forward must be provided")
 	}
 
-	// listen ipv4 and ipv6
-	tcp4Addr, err := net.ResolveTCPAddr("tcp4", p.ListenIPv4Addr())
+	tcpAddr, err := net.ResolveTCPAddr("tcp", p.ListenIPv4Addr())
 	if err != nil {
-		p.logger.Fatal("Resolve TCP over IPv4 failed", zap.Error(err))
+		p.logger.Fatal("Resolve TCP failed", zap.Error(err))
 	}
-	if tcp4Listener, err := net.ListenTCP("tcp4", tcp4Addr); err != nil {
-		p.logger.Fatal("Listen TCP over IPv4 failed", zap.Error(err))
+	if tcpListener, err := net.ListenTCP("tcp", tcpAddr); err != nil {
+		p.logger.Fatal("Listen TCP failed", zap.Error(err))
 	} else {
-		p.tcp4Listener = tcp4Listener
+		p.tcpListener = tcpListener
 	}
 
-	tcp6Addr, err := net.ResolveTCPAddr("tcp6", p.ListenIPv6Addr())
-	if err != nil {
-		p.logger.Fatal("Resolve TCP over IPv6 failed", zap.Error(err))
-	}
-	if tcp6Listener, err := net.ListenTCP("tcp6", tcp6Addr); err != nil {
-		p.logger.Fatal("Listen TCP over IPv6 failed", zap.Error(err))
-	} else {
-		p.tcp6Listener = tcp6Listener
-	}
 	p.logger.Info("Start listening connections")
 
 	go func() {
 		for {
-			conn, err := p.tcp4Listener.Accept()
+			conn, err := p.tcpListener.Accept()
 			if err != nil {
-				p.logger.Error("Accepting IPv4 connection failed", zap.Error(err))
-				continue
-			}
-			go p.handleTCP(conn)
-		}
-	}()
-	go func() {
-		for {
-			conn, err := p.tcp6Listener.Accept()
-			if err != nil {
-				p.logger.Error("Accepting IPv6 connection failed", zap.Error(err))
+				p.logger.Error("Accepting connection failed", zap.Error(err))
 				continue
 			}
 			go p.handleTCP(conn)
@@ -85,9 +61,9 @@ func (p TCP) handleTCP(tcpConn net.Conn) {
 	defer tcpConn.Close()
 
 	p.logger.Info("New TCP connection", zap.String(consts.SourceAddr, tcpConn.RemoteAddr().String()))
-	serverConn, err := net.Dial("tcp", p.DestAddr())
+	serverConn, err := net.Dial("tcp", p.DstAddr())
 	if err != nil {
-		p.logger.Error("Connect to dest failed", zap.Error(err), zap.String(consts.DestAddr, p.DestAddr()))
+		p.logger.Error("Connect to dst failed", zap.Error(err), zap.String(consts.DstAddr, p.DstAddr()))
 		_ = tcpConn.Close()
 		return
 	}
@@ -95,19 +71,19 @@ func (p TCP) handleTCP(tcpConn net.Conn) {
 }
 
 // pipe from local socket to remote socket
-func (p TCP) pipe(src net.Conn, dest net.Conn) {
+func (p TCP) pipe(src net.Conn, dst net.Conn) {
 	errChan := make(chan error, 1)
 	onClose := func(err error) {
-		_ = dest.Close()
+		_ = dst.Close()
 		_ = src.Close()
 	}
 	go func() {
-		_, err := io.Copy(src, dest)
+		_, err := io.Copy(src, dst)
 		errChan <- err
 		onClose(err)
 	}()
 	go func() {
-		_, err := io.Copy(dest, src)
+		_, err := io.Copy(dst, src)
 		errChan <- err
 		onClose(err)
 	}()

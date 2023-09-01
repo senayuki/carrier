@@ -30,16 +30,16 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	startAt := time.Now()
 	h.logger.Info("Receive connection", zap.String(consts.Path, r.RequestURI), zap.String(consts.Method, r.Method))
 	h.proxy.ServeHTTP(w, r)
-	h.logger.Debug("Close connection", zap.String(consts.Path, r.RequestURI), zap.String(consts.Method, r.Method), zap.Int64(consts.Duration, time.Now().Sub(startAt).Milliseconds()))
+	h.logger.Debug("Close connection", zap.String(consts.Path, r.RequestURI), zap.String(consts.Method, r.Method), zap.Int64(consts.Duration, time.Since(startAt).Milliseconds()))
 }
 
 func (h *HTTP) Start() error {
 	h.logger = log.Logger(consts.HTTPProxy).With(zap.Int16(consts.ListenPort, int16(h.ListenPort)),
-		zap.Int16(consts.DestPort, int16(h.DestPort)), zap.String(consts.DestUri, h.DestUri()))
+		zap.Int16(consts.DstPort, int16(h.DstPort)), zap.String(consts.DstUri, h.DstUri()))
 
-	targetUrl, err := url.Parse(h.DestUri())
+	targetUrl, err := url.Parse(h.DstUri())
 	if err != nil {
-		h.logger.Fatal("Parse dest URI failed", zap.Error(err))
+		h.logger.Fatal("Parse dst URI failed", zap.Error(err))
 	}
 
 	h.proxy = httputil.NewSingleHostReverseProxy(targetUrl)

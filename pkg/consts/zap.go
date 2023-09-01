@@ -7,9 +7,9 @@ const (
 	Method     = "method"
 	Duration   = "duration"
 	ListenPort = "listen-port"
-	DestPort   = "dest-port"
-	DestUri    = "dest-uri"
-	DestAddr   = "dest-addr"
+	DstPort    = "dst-port"
+	DstUri     = "dst-uri"
+	DstAddr    = "dst-addr"
 	SourceAddr = "source-addr"
 	Component  = "component"
 )
@@ -20,5 +20,6 @@ const (
 	Main      = "main"
 	HTTPProxy = "http-proxy"
 	TCPProxy  = "tcp-proxy"
+	UDPProxy  = "udp-proxy"
 	NATPMP    = "natpmp"
 )

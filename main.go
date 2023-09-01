@@ -35,7 +35,7 @@ func main() {
 	}
 	for _, forward := range types.Forwards {
 		forward := forward
-		switch forward.DestProtocol {
+		switch forward.DstProtocol {
 		case types.ProtocolTCP:
 			conn := bridge.TCP{Forward: &forward}
 			conn.Start()
@@ -46,7 +46,6 @@ func main() {
 			defer conn.Close()
 		}
 	}
-
 	close := make(chan struct{})
 	<-close
 }
