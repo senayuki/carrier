@@ -59,7 +59,7 @@ func (h *HTTP) Start() error {
 		}
 		h.logger.Info("Start listening HTTPS connections")
 		go func() {
-			err = http.ListenAndServeTLS(":"+strconv.Itoa(int(h.ListenPort)), h.TLSCert.TLSCertPath, h.TLSCert.TLSKeyPath, h)
+			err = http.ListenAndServeTLS(":"+strconv.Itoa(int(h.ListenPort)), h.TLS.CertPath, h.TLS.KeyPath, h)
 			if err != nil {
 				h.logger.Fatal("ListenAndServeTLS failed", zap.Error(err))
 			}

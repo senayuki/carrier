@@ -6,8 +6,6 @@ import (
 	"strconv"
 )
 
-var Forwards = []Forward{}
-
 type Protocol string
 
 const (
@@ -27,28 +25,32 @@ const (
 
 type (
 	DNSSetting struct {
-		Cache     uint16       `yaml:"cache" json:"cache"`           // seconds, defalut or 0 will disable update IP
-		Server    string       `yaml:"server" json:"server"`         // use system setting by default
-		ForceType DNSForceType `yaml:"force_type" json:"force_type"` // force to use A or AAAA record
+		Cache     uint16       `yaml:"cache"`      // seconds, defalut or 0 will disable update IP
+		Server    string       `yaml:"server"`     // use system setting by default
+		ForceType DNSForceType `yaml:"force_type"` // force to use A or AAAA record
 	}
 	DNSForceType string
 )
 
 type Forward struct {
-	ListenPort     uint16   `yaml:"listen_prot" json:"listen_prot"`
-	ListenProtocol Protocol `yaml:"listen_protocol" json:"listen_protocol"`
+	ListenPort     uint16   `yaml:"listen_port"`
+	ListenProtocol Protocol `yaml:"listen_protocol"`
 
-	DstPort     uint16   `yaml:"dst_prot" json:"dst_prot"`
-	DstHost     string   `yaml:"dst_host" json:"dst_host"` // ipv4 or ipv6 or domain
-	DstProtocol Protocol `yaml:"dst_protocol" json:"dst_protocol"`
+	DstPort     uint16   `yaml:"dst_port"`
+	DstHost     string   `yaml:"dst_host"` // ipv4 or ipv6 or domain
+	DstProtocol Protocol `yaml:"dst_protocol"`
 
-	DNS DNSSetting `yaml:"dns" json:"dns"`
+	DNS DNSSetting `yaml:"dns"`
 
-	TLSCert        Cert   `yaml:"tls_cert" json:"tls_cert"`
-	TLSRef         string `yaml:"tls_ref" json:"tls_ref"` // perferred, reference to TLS certificate
-	IgnoreTLSError bool   `yaml:"ignore_tls_error" json:"ignore_tls_error"`
+	TLS            ForwardTLS `yaml:"tls"`
+	IgnoreTLSError bool       `yaml:"ignore_tls_error"`
 
-	PortMapping bool `yaml:"port_mapping" json:"port_mapping"` // auto port mapping
+	PortMapping bool `yaml:"port_mapping"` // auto port mapping
+}
+type ForwardTLS struct {
+	CertPath string `yaml:"cert_file"`
+	KeyPath  string `yaml:"key_file"`
+	RefAlias string `yaml:"ref_alias"` // perferred, reference to alias of cert
 }
 
 func (f Forward) ListenIPv4Addr() string {
@@ -64,14 +66,15 @@ func (f Forward) DstUri() string {
 	return fmt.Sprintf("%s://%s", f.DstProtocol, f.DstAddr())
 }
 func (f *Forward) LoadTLSRef() error {
-	if f.TLSRef != "" {
-		if cert, ok := Certs[f.TLSRef]; !ok {
-			return fmt.Errorf("TLS ref %s not found", f.TLSRef)
+	if f.TLS.RefAlias != "" {
+		if cert, ok := ConfigInstance.CertsAlias[f.TLS.RefAlias]; !ok {
+			return fmt.Errorf("TLS ref '%s' not found", f.TLS.RefAlias)
 		} else {
-			f.TLSCert = cert
+			f.TLS.CertPath = cert.TLSCertPath
+			f.TLS.KeyPath = cert.TLSKeyPath
 		}
 	} else {
-		if f.TLSCert.TLSCertPath == "" || f.TLSCert.TLSKeyPath == "" {
+		if f.TLS.CertPath == "" || f.TLS.KeyPath == "" {
 			return fmt.Errorf("TLS cert or key file unset")
 		}
 	}
