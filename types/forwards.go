@@ -50,9 +50,9 @@ type Forward struct {
 	PortMapping bool `yaml:"port_mapping"` // auto port mapping
 }
 type ForwardTLS struct {
-	CertPath string `yaml:"cert_file"`
-	KeyPath  string `yaml:"key_file"`
-	RefAlias string `yaml:"ref_alias"` // perferred, reference to alias of cert
+	EnableTLS  bool   `yaml:"enable_tls"`
+	RefAlias   string `yaml:"ref_alias"` // perferred, reference to alias of cert
+	CertConfig `yaml:",inline"`
 }
 
 func (f *Forward) Valid() error {
@@ -84,17 +84,24 @@ func (f Forward) DstUri() string {
 	return fmt.Sprintf("%s://%s", f.DstProtocol, f.DstAddr())
 }
 func (f *Forward) LoadTLSRef() error {
+	var cert CertConfig
+
 	if f.TLS.RefAlias != "" {
-		if cert, ok := ConfigInstance.CertsAlias[f.TLS.RefAlias]; !ok {
-			return fmt.Errorf("TLS ref '%s' not found", f.TLS.RefAlias)
+		if certRef, ok := ConfigInstance.CertsAlias[f.TLS.RefAlias]; !ok {
+			return fmt.Errorf("TLS ref alias '%s' not found", f.TLS.RefAlias)
 		} else {
-			f.TLS.CertPath = cert.TLSCertPath
-			f.TLS.KeyPath = cert.TLSKeyPath
+			cert = certRef.CertConfig
 		}
 	} else {
-		if f.TLS.CertPath == "" || f.TLS.KeyPath == "" {
-			return fmt.Errorf("TLS cert or key file unset")
-		}
+		cert = f.TLS.CertConfig
+	}
+
+	certPath, keyPath, err := cert.GetCertFile()
+	if err != nil {
+		return fmt.Errorf("get cert file failed: %s", err)
+	} else {
+		f.TLS.CertPath = certPath
+		f.TLS.KeyPath = keyPath
 	}
 	return nil
 }

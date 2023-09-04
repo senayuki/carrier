@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
+	"os"
 
 	"github.com/senayuki/carrier/bridge"
 	"github.com/senayuki/carrier/pkg/consts"
@@ -20,7 +20,7 @@ func main() {
 		config := flag.String("config", "config.yaml", "path to config YAML file")
 		flag.Parse()
 		logger.Info("loading config", zap.String(consts.Config, *config))
-		data, err := ioutil.ReadFile(*config)
+		data, err := os.ReadFile(*config)
 		if err != nil {
 			logger.Fatal("read config failed", zap.Error(err))
 		}
