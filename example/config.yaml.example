@@ -1,0 +1,22 @@
+fowards:
+  -
+    dst_host: 127.0.0.1 # domain or ip address
+    dst_port: 8080
+    dst_protocol: "http" # http/https/udp/tcp
+
+    # listen_port: 8443 # same as "dst_port" if unset
+    # listen_protocol: "https" # same as "dst_protocol" if unset, only support convert between http and https right now
+
+    tls: 
+      ref_alias: "example.github.com" # ref cert setting in certs fields
+      cert_file: ".cer"
+      key_file: ".key"
+    ignore_tls_error: true # id dst has invalid https cert, ignore it.
+    port_mapping: false # automatic port mapping via NAT-PMP
+
+certs:
+  - # file example
+    alias: "example.github.com" # ref key of cert
+    mode: "file"
+    cert_file: ".cer"
+    key_file: ".key"

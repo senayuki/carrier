@@ -5,6 +5,7 @@ import (
 
 	"github.com/senayuki/carrier/pkg/consts"
 	"github.com/senayuki/carrier/pkg/log"
+	"github.com/senayuki/carrier/pkg/natpmp"
 	"github.com/senayuki/carrier/types"
 	"go.uber.org/zap"
 )
@@ -25,7 +26,8 @@ func (p *UDP) Close() error {
 
 func (p *UDP) Start() error {
 	p.logger = log.Logger(consts.UDPProxy).With(zap.Int16(consts.ListenPort, int16(p.ListenPort)),
-		zap.Int16(consts.DstPort, int16(p.DstPort)), zap.String(consts.DstUri, p.DstUri()))
+		zap.Int16(consts.DstPort, int16(p.DstPort)), zap.String(consts.DstUri, p.DstUri()),
+		zap.String(consts.ForwardName, p.Name))
 
 	if p.Forward == nil {
 		p.logger.Fatal("Forward must be provided")
@@ -41,6 +43,11 @@ func (p *UDP) Start() error {
 	} else {
 		p.udpListener = udp4Listener
 	}
+
+	if p.PortMapping {
+		go natpmp.AddPortMapping(int(p.ListenPort), "udp")
+	}
+
 	p.logger.Info("Start listening connections")
 
 	go func() {

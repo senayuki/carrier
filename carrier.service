@@ -1,11 +1,10 @@
 [Unit]
 Description=Carrier reverse proxy server
 After=network.target auditd.service
-ConditionPathExists=/etc/carrier/forwards.json
-ConditionPathExists=/etc/carrier/certs.json
+ConditionPathExists=/etc/carrier/config.yaml
 
 [Service]
-ExecStart=carrier --certs-json=/etc/carrier/certs.json --forwards-json=/etc/carrier/forwards.json
+ExecStart=carrier --config=/etc/carrier/config.yaml
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 Restart=on-failure

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"io/ioutil"
 
@@ -10,31 +9,34 @@ import (
 	"github.com/senayuki/carrier/pkg/log"
 	"github.com/senayuki/carrier/types"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
 
 func main() {
 	defer log.Sync()
+	logger := log.Logger(consts.Main)
 	// load configs
 	{
-		certsJSON := flag.String("certs-json", "certs.json", "path to certs JSON file")
-		forwardsJSON := flag.String("forwards-json", "forwards.json", "path to forwards JSON file")
+		config := flag.String("config", "config.yaml", "path to config YAML file")
 		flag.Parse()
-		logger := log.Logger(consts.Main)
-		logger.Info("loading certs-json", zap.String(consts.Config, *certsJSON))
-		logger.Info("loading forwards-json", zap.String(consts.Config, *forwardsJSON))
-		data, err := ioutil.ReadFile(*certsJSON)
+		logger.Info("loading config", zap.String(consts.Config, *config))
+		data, err := ioutil.ReadFile(*config)
 		if err != nil {
-			logger.Fatal("read certs-json failed", zap.Error(err))
+			logger.Fatal("read config failed", zap.Error(err))
 		}
-		json.Unmarshal(data, &types.Certs)
-		data, err = ioutil.ReadFile(*forwardsJSON)
+		yaml.Unmarshal(data, &types.ConfigInstance)
+		err = types.ConfigInstance.LoadCerts()
 		if err != nil {
-			logger.Fatal("read forwards-json failed", zap.Error(err))
+			logger.Fatal("load certs config failed", zap.Error(err))
 		}
-		json.Unmarshal(data, &types.Forwards)
 	}
-	for _, forward := range types.Forwards {
+	for _, forward := range types.ConfigInstance.Forwards {
 		forward := forward
+		err := forward.Valid()
+		if err != nil {
+			logger.Error("Valid forward rule failed", zap.Error(err), zap.String(consts.ForwardName, forward.Name))
+			continue
+		}
 		switch forward.DstProtocol {
 		case types.ProtocolTCP:
 			conn := bridge.TCP{Forward: &forward}

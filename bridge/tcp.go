@@ -6,6 +6,7 @@ import (
 
 	"github.com/senayuki/carrier/pkg/consts"
 	"github.com/senayuki/carrier/pkg/log"
+	"github.com/senayuki/carrier/pkg/natpmp"
 	"github.com/senayuki/carrier/types"
 	"go.uber.org/zap"
 )
@@ -26,7 +27,8 @@ func (p *TCP) Close() error {
 
 func (p *TCP) Start() error {
 	p.logger = log.Logger(consts.TCPProxy).With(zap.Int16(consts.ListenPort, int16(p.ListenPort)),
-		zap.Int16(consts.DstPort, int16(p.DstPort)), zap.String(consts.DstUri, p.DstUri()))
+		zap.Int16(consts.DstPort, int16(p.DstPort)), zap.String(consts.DstUri, p.DstUri()),
+		zap.String(consts.ForwardName, p.Name))
 
 	if p.Forward == nil {
 		p.logger.Fatal("Forward must be provided")
@@ -40,6 +42,10 @@ func (p *TCP) Start() error {
 		p.logger.Fatal("Listen TCP failed", zap.Error(err))
 	} else {
 		p.tcpListener = tcpListener
+	}
+
+	if p.PortMapping {
+		go natpmp.AddPortMapping(int(p.ListenPort), "tcp")
 	}
 
 	p.logger.Info("Start listening connections")

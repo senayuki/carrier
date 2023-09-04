@@ -25,11 +25,11 @@ func init() {
 	client = pmp.NewClient(gatewayIP)
 }
 
-func AddPortMapping(port int) {
-	logger := logger.With(zap.Int16(consts.ListenPort, int16(port)))
+func AddPortMapping(port int, protocol string) {
+	logger := logger.With(zap.Int16(consts.ListenPort, int16(port)), zap.String(consts.Protocol, protocol))
 
 	logger.Info("AddPortMapping")
-	_, err := client.AddPortMapping("tcp", port, port, 60*2)
+	_, err := client.AddPortMapping(protocol, port, port, 60*2)
 	if err != nil {
 		logger.Fatal("AddPortMapping failed", zap.Error(err))
 	}

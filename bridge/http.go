@@ -35,7 +35,8 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTP) Start() error {
 	h.logger = log.Logger(consts.HTTPProxy).With(zap.Int16(consts.ListenPort, int16(h.ListenPort)),
-		zap.Int16(consts.DstPort, int16(h.DstPort)), zap.String(consts.DstUri, h.DstUri()))
+		zap.Int16(consts.DstPort, int16(h.DstPort)), zap.String(consts.DstUri, h.DstUri()),
+		zap.String(consts.ForwardName, h.Name))
 
 	targetUrl, err := url.Parse(h.DstUri())
 	if err != nil {
@@ -50,7 +51,7 @@ func (h *HTTP) Start() error {
 	}
 
 	if h.PortMapping {
-		go natpmp.AddPortMapping(int(h.ListenPort))
+		go natpmp.AddPortMapping(int(h.ListenPort), "tcp")
 	}
 
 	if h.ListenProtocol == types.ProtocolHTTPS {
@@ -59,7 +60,7 @@ func (h *HTTP) Start() error {
 		}
 		h.logger.Info("Start listening HTTPS connections")
 		go func() {
-			err = http.ListenAndServeTLS(":"+strconv.Itoa(int(h.ListenPort)), h.TLSCert.TLSCertPath, h.TLSCert.TLSKeyPath, h)
+			err = http.ListenAndServeTLS(":"+strconv.Itoa(int(h.ListenPort)), h.TLS.CertPath, h.TLS.KeyPath, h)
 			if err != nil {
 				h.logger.Fatal("ListenAndServeTLS failed", zap.Error(err))
 			}
