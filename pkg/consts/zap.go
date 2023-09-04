@@ -7,6 +7,7 @@ const (
 	Method      = "method"
 	Duration    = "duration"
 	ListenPort  = "listen-port"
+	Protocol    = "protocol"
 	DstPort     = "dst-port"
 	DstUri      = "dst-uri"
 	DstAddr     = "dst-addr"

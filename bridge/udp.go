@@ -5,6 +5,7 @@ import (
 
 	"github.com/senayuki/carrier/pkg/consts"
 	"github.com/senayuki/carrier/pkg/log"
+	"github.com/senayuki/carrier/pkg/natpmp"
 	"github.com/senayuki/carrier/types"
 	"go.uber.org/zap"
 )
@@ -42,6 +43,11 @@ func (p *UDP) Start() error {
 	} else {
 		p.udpListener = udp4Listener
 	}
+
+	if p.PortMapping {
+		go natpmp.AddPortMapping(int(p.ListenPort), "udp")
+	}
+
 	p.logger.Info("Start listening connections")
 
 	go func() {

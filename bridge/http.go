@@ -51,7 +51,7 @@ func (h *HTTP) Start() error {
 	}
 
 	if h.PortMapping {
-		go natpmp.AddPortMapping(int(h.ListenPort))
+		go natpmp.AddPortMapping(int(h.ListenPort), "tcp")
 	}
 
 	if h.ListenProtocol == types.ProtocolHTTPS {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/senayuki/carrier/pkg/consts"
 	"github.com/senayuki/carrier/pkg/log"
+	"github.com/senayuki/carrier/pkg/natpmp"
 	"github.com/senayuki/carrier/types"
 	"go.uber.org/zap"
 )
@@ -41,6 +42,10 @@ func (p *TCP) Start() error {
 		p.logger.Fatal("Listen TCP failed", zap.Error(err))
 	} else {
 		p.tcpListener = tcpListener
+	}
+
+	if p.PortMapping {
+		go natpmp.AddPortMapping(int(p.ListenPort), "tcp")
 	}
 
 	p.logger.Info("Start listening connections")
