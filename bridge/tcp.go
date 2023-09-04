@@ -26,7 +26,8 @@ func (p *TCP) Close() error {
 
 func (p *TCP) Start() error {
 	p.logger = log.Logger(consts.TCPProxy).With(zap.Int16(consts.ListenPort, int16(p.ListenPort)),
-		zap.Int16(consts.DstPort, int16(p.DstPort)), zap.String(consts.DstUri, p.DstUri()))
+		zap.Int16(consts.DstPort, int16(p.DstPort)), zap.String(consts.DstUri, p.DstUri()),
+		zap.String(consts.ForwardName, p.Name))
 
 	if p.Forward == nil {
 		p.logger.Fatal("Forward must be provided")

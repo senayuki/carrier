@@ -25,7 +25,8 @@ func (p *UDP) Close() error {
 
 func (p *UDP) Start() error {
 	p.logger = log.Logger(consts.UDPProxy).With(zap.Int16(consts.ListenPort, int16(p.ListenPort)),
-		zap.Int16(consts.DstPort, int16(p.DstPort)), zap.String(consts.DstUri, p.DstUri()))
+		zap.Int16(consts.DstPort, int16(p.DstPort)), zap.String(consts.DstUri, p.DstUri()),
+		zap.String(consts.ForwardName, p.Name))
 
 	if p.Forward == nil {
 		p.logger.Fatal("Forward must be provided")

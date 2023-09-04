@@ -14,11 +14,11 @@ import (
 
 func main() {
 	defer log.Sync()
+	logger := log.Logger(consts.Main)
 	// load configs
 	{
 		config := flag.String("config", "config.yaml", "path to config YAML file")
 		flag.Parse()
-		logger := log.Logger(consts.Main)
 		logger.Info("loading config", zap.String(consts.Config, *config))
 		data, err := ioutil.ReadFile(*config)
 		if err != nil {
@@ -32,6 +32,11 @@ func main() {
 	}
 	for _, forward := range types.ConfigInstance.Forwards {
 		forward := forward
+		err := forward.Valid()
+		if err != nil {
+			logger.Error("Valid forward rule failed", zap.Error(err), zap.String(consts.ForwardName, forward.Name))
+			continue
+		}
 		switch forward.DstProtocol {
 		case types.ProtocolTCP:
 			conn := bridge.TCP{Forward: &forward}

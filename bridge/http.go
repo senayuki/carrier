@@ -35,7 +35,8 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTP) Start() error {
 	h.logger = log.Logger(consts.HTTPProxy).With(zap.Int16(consts.ListenPort, int16(h.ListenPort)),
-		zap.Int16(consts.DstPort, int16(h.DstPort)), zap.String(consts.DstUri, h.DstUri()))
+		zap.Int16(consts.DstPort, int16(h.DstPort)), zap.String(consts.DstUri, h.DstUri()),
+		zap.String(consts.ForwardName, h.Name))
 
 	targetUrl, err := url.Parse(h.DstUri())
 	if err != nil {

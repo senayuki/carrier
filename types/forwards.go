@@ -33,6 +33,8 @@ type (
 )
 
 type Forward struct {
+	Name string `yaml:"name"`
+
 	ListenPort     uint16   `yaml:"listen_port"`
 	ListenProtocol Protocol `yaml:"listen_protocol"`
 
@@ -51,6 +53,22 @@ type ForwardTLS struct {
 	CertPath string `yaml:"cert_file"`
 	KeyPath  string `yaml:"key_file"`
 	RefAlias string `yaml:"ref_alias"` // perferred, reference to alias of cert
+}
+
+func (f *Forward) Valid() error {
+	if f.DstHost == "" || f.DstPort == 0 {
+		return fmt.Errorf("invalid dst_host or dst_port")
+	}
+	if f.DstProtocol == "" {
+		return fmt.Errorf("dst_protocol unset")
+	}
+	if f.ListenPort == 0 {
+		f.ListenPort = f.DstPort
+	}
+	if f.ListenProtocol == "" {
+		f.ListenProtocol = f.DstProtocol
+	}
+	return nil
 }
 
 func (f Forward) ListenIPv4Addr() string {
