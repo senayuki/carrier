@@ -24,4 +24,5 @@ const (
 	TCPProxy  = "tcp-proxy"
 	UDPProxy  = "udp-proxy"
 	NATPMP    = "natpmp"
+	LEGO      = "lego"
 )

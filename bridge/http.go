@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/senayuki/carrier/pkg/consts"
+	"github.com/senayuki/carrier/pkg/lego"
 	"github.com/senayuki/carrier/pkg/log"
 	"github.com/senayuki/carrier/pkg/natpmp"
 
@@ -106,9 +107,18 @@ func getCertFile(cert types.CertConfig) (certFile, keyFile string, err error) {
 			return "", "", fmt.Errorf("TLS cert or key file unset")
 		}
 		return cert.CertPath, cert.KeyPath, nil
-	case types.CertModeDNS, types.CertModeHTTP, types.CertModeTLS:
-		// TODO acme
-		return "", "", nil
+	case types.CertModeDNS:
+		lego, err := lego.New(&cert, types.ConfigInstance.ConfigLocation)
+		if err != nil {
+			return "", "", err
+		}
+		return lego.DNSCert()
+	case types.CertModeHTTP, types.CertModeTLS:
+		lego, err := lego.New(&cert, types.ConfigInstance.ConfigLocation)
+		if err != nil {
+			return "", "", err
+		}
+		return lego.HTTPCert()
 	default:
 		return "", "", fmt.Errorf("unknown cert mode: %s", cert.Mode)
 	}
