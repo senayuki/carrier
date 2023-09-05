@@ -62,7 +62,17 @@ func (h *HTTP) Start() error {
 		}
 		h.logger.Info("Start listening HTTPS connections")
 		go func() {
-			err = http.ListenAndServeTLS(":"+strconv.Itoa(int(h.ListenPort)), h.TLS.CertPath, h.TLS.KeyPath, h)
+			server := &http.Server{Addr: fmt.Sprintf(":%d", h.ListenPort), Handler: h, TLSConfig: &tls.Config{
+				// read tls cert realtime
+				GetCertificate: func(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+					cert, err := tls.LoadX509KeyPair(h.TLS.CertPath, h.TLS.KeyPath)
+					if err != nil {
+						return nil, err
+					}
+					return &cert, nil
+				},
+			}}
+			err = server.ListenAndServeTLS("", "")
 			if err != nil {
 				h.logger.Fatal("ListenAndServeTLS failed", zap.Error(err))
 			}

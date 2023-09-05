@@ -68,6 +68,11 @@ func (f *Forward) Valid() error {
 	if f.ListenProtocol == "" {
 		f.ListenProtocol = f.DstProtocol
 	}
+	if f.DstProtocol != f.ListenProtocol {
+		if !((f.DstProtocol == ProtocolHTTPS && f.ListenProtocol == ProtocolHTTP) || (f.DstProtocol == ProtocolHTTP && f.ListenProtocol == ProtocolHTTPS)) {
+			return fmt.Errorf("cannot convert protocol unless http<->https")
+		}
+	}
 	return nil
 }
 

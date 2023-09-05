@@ -6,6 +6,7 @@ import (
 
 	"github.com/senayuki/carrier/bridge"
 	"github.com/senayuki/carrier/pkg/consts"
+	"github.com/senayuki/carrier/pkg/lego"
 	"github.com/senayuki/carrier/pkg/log"
 	"github.com/senayuki/carrier/types"
 	"go.uber.org/zap"
@@ -49,6 +50,7 @@ func main() {
 			defer conn.Close()
 		}
 	}
+	go lego.RenewCron()
 	close := make(chan struct{})
 	<-close
 }

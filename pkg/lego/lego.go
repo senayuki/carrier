@@ -59,6 +59,13 @@ func (l *LegoCMD) DNSCert() (CertPath string, KeyPath string, err error) {
 		return CertPath, KeyPath, nil
 	}()
 
+	defer func() {
+		if err == nil {
+			// record instance for renew
+			legos[l.C.Domain] = l
+		}
+	}()
+
 	// Set Env for DNS configuration
 	for key, value := range l.C.Env {
 		os.Setenv(strings.ToUpper(key), value)
@@ -78,6 +85,7 @@ func (l *LegoCMD) DNSCert() (CertPath string, KeyPath string, err error) {
 	if err != nil {
 		return "", "", err
 	}
+
 	return CertPath, KeyPath, nil
 }
 
@@ -97,6 +105,13 @@ func (l *LegoCMD) HTTPCert() (CertPath string, KeyPath string, err error) {
 			return "", "", err
 		}
 		return CertPath, KeyPath, nil
+	}()
+
+	defer func() {
+		if err == nil {
+			// record instance for renew
+			legos[l.C.Domain] = l
+		}
 	}()
 
 	// First check if the certificate exists
