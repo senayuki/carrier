@@ -25,7 +25,8 @@ func main() {
 			logger.Fatal("read config failed", zap.Error(err))
 		}
 		yaml.Unmarshal(data, &types.ConfigInstance)
-		err = types.ConfigInstance.LoadCerts()
+		types.ConfigInstance.ConfigLocation = *config
+		err = bridge.PreloadCerts(types.ConfigInstance)
 		if err != nil {
 			logger.Fatal("load certs config failed", zap.Error(err))
 		}

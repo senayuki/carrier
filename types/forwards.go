@@ -83,25 +83,3 @@ func (f Forward) DstAddr() string {
 func (f Forward) DstUri() string {
 	return fmt.Sprintf("%s://%s", f.DstProtocol, f.DstAddr())
 }
-func (f *Forward) LoadTLSRef() error {
-	var cert CertConfig
-
-	if f.TLS.RefAlias != "" {
-		if certRef, ok := ConfigInstance.CertsAlias[f.TLS.RefAlias]; !ok {
-			return fmt.Errorf("TLS ref alias '%s' not found", f.TLS.RefAlias)
-		} else {
-			cert = certRef.CertConfig
-		}
-	} else {
-		cert = f.TLS.CertConfig
-	}
-
-	certPath, keyPath, err := cert.GetCertFile()
-	if err != nil {
-		return fmt.Errorf("get cert file failed: %s", err)
-	} else {
-		f.TLS.CertPath = certPath
-		f.TLS.KeyPath = keyPath
-	}
-	return nil
-}

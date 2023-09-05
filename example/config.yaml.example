@@ -25,10 +25,10 @@ certs:
     key_file: ".key"
   - # acme example
     alias: "example.github.com"
-    mode: "dns" # dns or http
+    mode: "dns" # dns/http/tls
     domain: "example.github.com"
     email: "admin@xxx.com" # account of acme
     provider: cloudflare # read https://go-acme.github.io/lego/dns/ for more provider 
-    params: 
+    env: 
       CF_DNS_API_TOKEN: API_TOKEN
 
