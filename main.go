@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
+	"os"
 
 	"github.com/senayuki/carrier/bridge"
 	"github.com/senayuki/carrier/pkg/consts"
+	"github.com/senayuki/carrier/pkg/lego"
 	"github.com/senayuki/carrier/pkg/log"
 	"github.com/senayuki/carrier/types"
 	"go.uber.org/zap"
@@ -20,12 +21,13 @@ func main() {
 		config := flag.String("config", "config.yaml", "path to config YAML file")
 		flag.Parse()
 		logger.Info("loading config", zap.String(consts.Config, *config))
-		data, err := ioutil.ReadFile(*config)
+		data, err := os.ReadFile(*config)
 		if err != nil {
 			logger.Fatal("read config failed", zap.Error(err))
 		}
 		yaml.Unmarshal(data, &types.ConfigInstance)
-		err = types.ConfigInstance.LoadCerts()
+		types.ConfigInstance.ConfigLocation = *config
+		err = bridge.PreloadCerts(types.ConfigInstance)
 		if err != nil {
 			logger.Fatal("load certs config failed", zap.Error(err))
 		}
@@ -48,6 +50,7 @@ func main() {
 			defer conn.Close()
 		}
 	}
+	go lego.RenewCron()
 	close := make(chan struct{})
 	<-close
 }

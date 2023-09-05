@@ -8,7 +8,9 @@ fowards:
     # listen_protocol: "https" # same as "dst_protocol" if unset, only support convert between http and https right now
 
     tls: 
-      ref_alias: "example.github.com" # ref cert setting in certs fields
+      ref_alias: "example.github.com" # alias in certs fields
+      # use ref or certs config
+      mode: "file"
       cert_file: ".cer"
       key_file: ".key"
     ignore_tls_error: true # id dst has invalid https cert, ignore it.
@@ -20,3 +22,12 @@ certs:
     mode: "file"
     cert_file: ".cer"
     key_file: ".key"
+  - # acme example
+    alias: "example.github.com"
+    mode: "dns" # dns/http/tls
+    domain: "example.github.com"
+    email: "admin@xxx.com" # account of acme
+    provider: cloudflare # read https://go-acme.github.io/lego/dns/ for more provider 
+    env: 
+      CF_DNS_API_TOKEN: API_TOKEN
+

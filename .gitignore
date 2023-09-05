@@ -1,4 +1,3 @@
-*.cer
-*.key
+cert/*
 *.yaml
 .DS_Store
