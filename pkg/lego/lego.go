@@ -8,10 +8,19 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/senayuki/carrier/pkg/consts"
+	"github.com/senayuki/carrier/pkg/log"
 	"github.com/senayuki/carrier/types"
+	"go.uber.org/zap"
 )
 
+var logger *zap.Logger
+
 var defaultPath string
+
+func init() {
+	logger = log.Logger(consts.LEGO)
+}
 
 func New(certConf *types.CertConfig, configPath string) (*LegoCMD, error) {
 	// Set default path to configPath/cert
@@ -28,6 +37,12 @@ func New(certConf *types.CertConfig, configPath string) (*LegoCMD, error) {
 	lego := &LegoCMD{
 		C:    certConf,
 		path: defaultPath,
+		logger: logger.With(
+			zap.String("mode", string(certConf.Mode)),
+			zap.String("provider", string(certConf.Provider)),
+			zap.String("domain", string(certConf.Domain)),
+			zap.String("email", certConf.Email),
+		),
 	}
 
 	return lego, nil

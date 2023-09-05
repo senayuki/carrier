@@ -18,7 +18,7 @@ type CertConfig struct {
 	// for file mode
 	CertPath string `yaml:"cert_file"`
 	KeyPath  string `yaml:"key_file"`
-	// for acme(dns/http) mode
+	// for acme(dns/http/tls) mode
 	Provider string            `yaml:"provider"`
 	Domain   string            `yaml:"domain"`
 	Email    string            `yaml:"email"`

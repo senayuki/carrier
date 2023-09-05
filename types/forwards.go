@@ -50,7 +50,6 @@ type Forward struct {
 	PortMapping bool `yaml:"port_mapping"` // auto port mapping
 }
 type ForwardTLS struct {
-	EnableTLS  bool   `yaml:"enable_tls"`
 	RefAlias   string `yaml:"ref_alias"` // perferred, reference to alias of cert
 	CertConfig `yaml:",inline"`
 }
