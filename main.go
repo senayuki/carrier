@@ -32,6 +32,7 @@ func main() {
 			logger.Fatal("load certs config failed", zap.Error(err))
 		}
 	}
+	HTTPVHosts := map[uint16]*bridge.HTTPVHost{}
 	for _, forward := range types.ConfigInstance.Forwards {
 		forward := forward
 		err := forward.Valid()
@@ -46,8 +47,22 @@ func main() {
 			defer conn.Close()
 		case types.ProtocolHTTP, types.ProtocolHTTPS:
 			conn := bridge.HTTP{Forward: &forward}
-			conn.Start()
+			conn.Setup()
+			if _, ok := HTTPVHosts[forward.ListenPort]; !ok {
+				HTTPVHosts[forward.ListenPort] = &bridge.HTTPVHost{
+					Hosts:          map[string]*bridge.HTTP{},
+					ListenPort:     forward.ListenPort,
+					ListenProtocol: forward.ListenProtocol,
+				}
+			}
+			HTTPVHosts[forward.ListenPort].Hosts[forward.ListenHost] = &conn
 			defer conn.Close()
+		}
+	}
+	for port, vhost := range HTTPVHosts {
+		err := vhost.Start()
+		if err != nil {
+			logger.Fatal("start vhost failed", zap.Error(err), zap.Uint16(consts.ListenPort, port))
 		}
 	}
 	go lego.RenewCron()

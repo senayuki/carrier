@@ -6,6 +6,7 @@ fowards:
 
     # listen_port: 8443 # same as "dst_port" if unset
     # listen_protocol: "https" # same as "dst_protocol" if unset, only support convert between http and https right now
+    # listen_host: reg.senayuki.moe # split http request by host header, unset means default choose
 
     tls: 
       ref_alias: "example.github.com" # alias in certs fields

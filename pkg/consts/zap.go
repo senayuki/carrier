@@ -4,6 +4,7 @@ package consts
 const (
 	Config       = "config"
 	Path         = "path"
+	Host         = "host"
 	Method       = "method"
 	Duration     = "duration"
 	ListenPort   = "listen-port"
@@ -22,6 +23,7 @@ const (
 const (
 	Main      = "main"
 	HTTPProxy = "http-proxy"
+	HTTPVHost = "http-vhost"
 	TCPProxy  = "tcp-proxy"
 	UDPProxy  = "udp-proxy"
 	NATPMP    = "natpmp"

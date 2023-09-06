@@ -28,6 +28,7 @@ type HTTP struct {
 func (h *HTTP) Close() error {
 	return nil
 }
+
 func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	startAt := time.Now()
 	h.logger.Info("Receive connection", zap.String(consts.Path, r.RequestURI), zap.String(consts.Method, r.Method))
@@ -36,28 +37,17 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTP) Start() error {
-	h.logger = log.Logger(consts.HTTPProxy).With(zap.Int16(consts.ListenPort, int16(h.ListenPort)),
-		zap.Int16(consts.DstPort, int16(h.DstPort)), zap.String(consts.DstUri, h.DstUri()),
-		zap.String(consts.ForwardName, h.Name))
+	// setup configs
+	h.Setup()
 
-	targetUrl, err := url.Parse(h.DstUri())
-	if err != nil {
-		h.logger.Fatal("Parse dst URI failed", zap.Error(err))
-	}
-
-	h.proxy = httputil.NewSingleHostReverseProxy(targetUrl)
-	h.proxy.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: h.IgnoreTLSError,
-		},
-	}
-
+	// port mapping
 	if h.PortMapping {
 		go natpmp.AddPortMapping(int(h.ListenPort), "tcp")
 	}
 
+	// listen port
 	if h.ListenProtocol == types.ProtocolHTTPS {
-		if err := loadCert(h.Forward); err != nil {
+		if err := h.LoadCert(); err != nil {
 			h.logger.Fatal("Load cert failed", zap.Error(err))
 		}
 		h.logger.Info("Start listening HTTPS connections")
@@ -72,7 +62,7 @@ func (h *HTTP) Start() error {
 					return &cert, nil
 				},
 			}}
-			err = server.ListenAndServeTLS("", "")
+			err := server.ListenAndServeTLS("", "")
 			if err != nil {
 				h.logger.Fatal("ListenAndServeTLS failed", zap.Error(err))
 			}
@@ -87,25 +77,47 @@ func (h *HTTP) Start() error {
 	return nil
 }
 
-func loadCert(f *types.Forward) error {
+func (h *HTTP) Setup() {
+	h.logger = log.Logger(consts.HTTPProxy).With(zap.Int16(consts.ListenPort, int16(h.ListenPort)),
+		zap.Int16(consts.DstPort, int16(h.DstPort)), zap.String(consts.DstUri, h.DstUri()),
+		zap.String(consts.ForwardName, h.Name))
+
+	targetUrl, err := url.Parse(h.DstUri())
+	if err != nil {
+		h.logger.Fatal("Parse dst URI failed", zap.Error(err))
+	}
+	if h.ListenProtocol == types.ProtocolHTTPS {
+		if err := h.LoadCert(); err != nil {
+			h.logger.Fatal("Load cert failed", zap.Error(err))
+		}
+	}
+	h.proxy = httputil.NewSingleHostReverseProxy(targetUrl)
+	h.proxy.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: h.IgnoreTLSError,
+		},
+	}
+}
+
+func (h *HTTP) LoadCert() error {
 	var cert types.CertConfig
 
-	if f.TLS.RefAlias != "" {
-		if certRef, ok := types.ConfigInstance.CertsAlias[f.TLS.RefAlias]; !ok {
-			return fmt.Errorf("TLS ref alias '%s' not found", f.TLS.RefAlias)
+	if h.Forward.TLS.RefAlias != "" {
+		if certRef, ok := types.ConfigInstance.CertsAlias[h.Forward.TLS.RefAlias]; !ok {
+			return fmt.Errorf("TLS ref alias '%s' not found", h.Forward.TLS.RefAlias)
 		} else {
 			cert = certRef.CertConfig
 		}
 	} else {
-		cert = f.TLS.CertConfig
+		cert = h.Forward.TLS.CertConfig
 	}
 
 	certPath, keyPath, err := getCertFile(cert)
 	if err != nil {
 		return fmt.Errorf("get cert file failed: %s", err)
 	} else {
-		f.TLS.CertPath = certPath
-		f.TLS.KeyPath = keyPath
+		h.Forward.TLS.CertPath = certPath
+		h.Forward.TLS.KeyPath = keyPath
 	}
 	return nil
 }

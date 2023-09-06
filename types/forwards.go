@@ -36,6 +36,7 @@ type Forward struct {
 	Name string `yaml:"name"`
 
 	ListenPort     uint16   `yaml:"listen_port"`
+	ListenHost     string   `yaml:"listen_host"`
 	ListenProtocol Protocol `yaml:"listen_protocol"`
 
 	DstPort     uint16   `yaml:"dst_port"`
