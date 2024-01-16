@@ -1,6 +1,6 @@
 module github.com/senayuki/carrier
 
-go 1.18
+go 1.20
 
 require (
 	github.com/go-acme/lego/v4 v4.14.0

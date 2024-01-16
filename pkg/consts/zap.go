@@ -15,6 +15,8 @@ const (
 	Component    = "component"
 	SubComponent = "sub-component"
 	ForwardName  = "forward-name"
+	ForwardCount = "forward-count"
+	CertCount    = "cert-count"
 )
 
 // Components

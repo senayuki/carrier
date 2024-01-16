@@ -2,7 +2,8 @@ package main
 
 import (
 	"flag"
-	"os"
+	"io/ioutil"
+	"path"
 
 	"github.com/senayuki/carrier/bridge"
 	"github.com/senayuki/carrier/pkg/consts"
@@ -16,22 +17,63 @@ import (
 func main() {
 	defer log.Sync()
 	logger := log.Logger(consts.Main)
+	logger.Info("Carrier starting")
 	// load configs
 	{
-		config := flag.String("config", "config.yaml", "path to config YAML file")
+		// single config
+		config := flag.String("config", "", "path to config YAML file")
+		// config dir
+		configDir := flag.String("configDir", "./conf", "directory which contains config YAML files, non-recursion")
+		// acme dir
+		acmeDir := flag.String("acmeDir", "./acme", "directory which storage ACME datas")
 		flag.Parse()
-		logger.Info("loading config", zap.String(consts.Config, *config))
-		data, err := os.ReadFile(*config)
-		if err != nil {
-			logger.Fatal("read config failed", zap.Error(err))
+
+		initConfig := types.Config{}
+		if config != nil && *config != "" {
+			logger.Info("loading config file", zap.String(consts.Config, *config))
+			data, err := ioutil.ReadFile(*config)
+			if err != nil {
+				logger.Fatal("read config file failed", zap.Error(err), zap.String(consts.Config, *config))
+			}
+			conf := types.Config{}
+			yaml.Unmarshal(data, &conf)
+			initConfig.Forwards = append(initConfig.Forwards, conf.Forwards...)
+			initConfig.Certs = append(initConfig.Certs, conf.Certs...)
 		}
-		yaml.Unmarshal(data, &types.ConfigInstance)
-		types.ConfigInstance.ConfigLocation = *config
-		err = bridge.PreloadCerts(types.ConfigInstance)
+
+		if configDir != nil && *configDir != "" {
+			logger.Info("loading config files from directory", zap.String(consts.Config, *configDir))
+			files, err := ioutil.ReadDir(*configDir)
+			if err != nil {
+				logger.Fatal("read config failed", zap.Error(err))
+			}
+			for _, file := range files {
+				if file.IsDir() {
+					continue
+				}
+				filename := path.Join(*configDir, file.Name())
+				logger.Info("loading config file", zap.String(consts.Config, filename))
+				data, err := ioutil.ReadFile(filename)
+				if err != nil {
+					logger.Fatal("read config file failed", zap.Error(err), zap.String(consts.Config, filename))
+				}
+				conf := types.Config{}
+				yaml.Unmarshal(data, &conf)
+				initConfig.Forwards = append(initConfig.Forwards, conf.Forwards...)
+				initConfig.Certs = append(initConfig.Certs, conf.Certs...)
+			}
+		}
+
+		types.ConfigInstance = initConfig
+		types.ConfigInstance.ACMEDir = *acmeDir
+		err := bridge.PreloadCerts(types.ConfigInstance)
 		if err != nil {
 			logger.Fatal("load certs config failed", zap.Error(err))
 		}
 	}
+
+	logger.Info("Carrier config loaded", zap.Int(consts.ForwardCount, len(types.ConfigInstance.Forwards)), zap.Int(consts.CertCount, len(types.ConfigInstance.Certs)))
+
 	for _, forward := range types.ConfigInstance.Forwards {
 		forward := forward
 		err := forward.Valid()

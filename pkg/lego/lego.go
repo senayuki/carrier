@@ -22,21 +22,32 @@ func init() {
 	logger = log.Logger(consts.LEGO)
 }
 
-func New(certConf *types.CertConfig, configPath string) (*LegoCMD, error) {
+func New(certConf *types.CertConfig, certData string) (*LegoCMD, error) {
 	// Set default path to configPath/cert
 	var p = ""
-	if configPath != "" {
-		p = path.Dir(configPath)
+	if certData != "" {
+		fileInfo, err := os.Stat(certData)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return nil, fmt.Errorf("failed to open acmeDir: %s", err.Error())
+			}
+		} else {
+			if !fileInfo.IsDir() {
+				return nil, fmt.Errorf("acmeDir is not dir: %s", err.Error())
+			}
+		}
+		p = certData
 	} else if cwd, err := os.Getwd(); err == nil {
 		p = cwd
 	} else {
 		p = "."
 	}
 
-	defaultPath = filepath.Join(p, "cert")
+	defaultPath = p
+
 	lego := &LegoCMD{
 		C:    certConf,
-		path: defaultPath,
+		path: p,
 		logger: logger.With(
 			zap.String("mode", string(certConf.Mode)),
 			zap.String("provider", string(certConf.Provider)),
@@ -46,14 +57,6 @@ func New(certConf *types.CertConfig, configPath string) (*LegoCMD, error) {
 	}
 
 	return lego, nil
-}
-
-func (l *LegoCMD) getPath() string {
-	return l.path
-}
-
-func (l *LegoCMD) getCertConfig() *types.CertConfig {
-	return l.C
 }
 
 // DNSCert cert a domain using DNS API

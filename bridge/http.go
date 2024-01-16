@@ -118,13 +118,13 @@ func getCertFile(cert types.CertConfig) (certFile, keyFile string, err error) {
 		}
 		return cert.CertPath, cert.KeyPath, nil
 	case types.CertModeDNS:
-		lego, err := lego.New(&cert, types.ConfigInstance.ConfigLocation)
+		lego, err := lego.New(&cert, types.ConfigInstance.ACMEDir)
 		if err != nil {
 			return "", "", err
 		}
 		return lego.DNSCert()
 	case types.CertModeHTTP, types.CertModeTLS:
-		lego, err := lego.New(&cert, types.ConfigInstance.ConfigLocation)
+		lego, err := lego.New(&cert, types.ConfigInstance.ACMEDir)
 		if err != nil {
 			return "", "", err
 		}
